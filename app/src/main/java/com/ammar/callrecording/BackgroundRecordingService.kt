@@ -7,12 +7,10 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.media.MediaRecorder
 import android.os.Build
 import android.os.IBinder
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
-import android.util.Log
 import androidx.core.app.NotificationCompat
 
 class BackgroundRecordingService : Service() {
@@ -35,12 +33,10 @@ class BackgroundRecordingService : Service() {
         return START_STICKY
     }
 
-
     override fun onDestroy() {
         telephonyManager.listen(callStateListener, PhoneStateListener.LISTEN_NONE)
         super.onDestroy()
     }
-
 
     private fun createNotification(): Notification {
         createNotificationChannel()

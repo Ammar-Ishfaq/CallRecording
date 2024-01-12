@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Required permissions for call recording -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -20,16 +21,18 @@
         android:theme="@style/Theme.CallRecording"
         tools:targetApi="31">
 
+        <!-- Declare the BackgroundRecordingService -->
         <service
-            android:name=".BackgroundRecordingService"
+            android:name="com.ammar.callrecording.BackgroundRecordingService"
             android:enabled="true"
             android:exported="false" />
+
+        <!-- Main Activity -->
         <activity
-            android:name=".MainActivity"
+            android:name="com.ammar.callrecording.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
