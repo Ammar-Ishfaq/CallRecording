@@ -4,6 +4,8 @@ import android.content.Context
 import android.media.MediaRecorder
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
+import android.util.Log
+import java.util.Date
 
 class CallStateListener(private val context: Context) : PhoneStateListener() {
     private var mediaRecorder: MediaRecorder? = null
@@ -25,17 +27,22 @@ class CallStateListener(private val context: Context) : PhoneStateListener() {
             try {
                 mediaRecorder = MediaRecorder()
                 mediaRecorder?.apply {
-                    setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
-                    setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-                    setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-                    setOutputFile(context.getExternalFilesDir(null)?.absolutePath + "/recorded_call.3gp")
+                   setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
+                  setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
+                   setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+                  setAudioSamplingRate(44100);
+
+                    setOutputFile(context.getExternalFilesDir(null)?.absolutePath + "/recorded_call_${Date().time}.mp3")
+
+
 
                     prepare()
                     start()
                     isRecording = true
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+//                e.printStackTrace()
+                Log.e("recordingError","err => ${e.toString()}")
             }
         }
     }
