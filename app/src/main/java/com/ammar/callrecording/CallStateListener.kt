@@ -1,6 +1,7 @@
 package com.ammar.callrecording
 
 import android.content.Context
+import android.media.AudioManager
 import android.media.MediaRecorder
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
@@ -25,12 +26,19 @@ class CallStateListener(private val context: Context) : PhoneStateListener() {
     private fun startRecording() {
         if (!isRecording) {
             try {
+                val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                audioManager.requestAudioFocus(
+                    null,
+                    AudioManager.STREAM_VOICE_CALL,
+                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
+                )
+
                 mediaRecorder = MediaRecorder()
                 mediaRecorder?.apply {
-                   setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
-                  setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
-                   setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-                  setAudioSamplingRate(44100);
+                    setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
+                    setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
+                    setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+                    setAudioSamplingRate(44100);
 
                     setOutputFile(context.getExternalFilesDir(null)?.absolutePath + "/recorded_call_${Date().time}.mp3")
 
@@ -42,7 +50,7 @@ class CallStateListener(private val context: Context) : PhoneStateListener() {
                 }
             } catch (e: Exception) {
 //                e.printStackTrace()
-                Log.e("recordingError","err => ${e.toString()}")
+                Log.e("recordingError", "err => ${e.toString()}")
             }
         }
     }
