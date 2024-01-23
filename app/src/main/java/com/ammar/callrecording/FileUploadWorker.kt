@@ -13,14 +13,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
 import java.io.FileInputStream
-import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 
 class FileUploadWorker(
@@ -45,46 +39,40 @@ class FileUploadWorker(
                 return@withContext Result.failure()
             }
 
-            val file = File(filePath)
+            val result = suspendCancellableCoroutine { continuation ->
+                Ion.with(appContext)
+                    .load("http://192.168.43.62:5050/api/Audio")
+                    .setHeader(
+                        "Content-Type",
+                        "application/json"
+                    ) // Set the content type to binary
+//                    .setFileBody(File(filePath))
+                    .setMultipartParameter("description", "Audio file description")
+                    .setMultipartFile("audioFile", "application/mp3", File(filePath))
 
-            val description = RequestBody.create(MultipartBody.FORM, "Audio file description")
-            val requestFile = RequestBody.create(MultipartBody.FORM, file)
-            val filePart = MultipartBody.Part.createFormData("audioFile", file.name, requestFile)
-
-            val okHttpClient = OkHttpClient.Builder()
-                .connectTimeout(300, TimeUnit.SECONDS)
-                .readTimeout(300, TimeUnit.SECONDS)
-                .writeTimeout(300, TimeUnit.SECONDS)
-                .build()
-
-            val retrofit = Retrofit.Builder()
-                .baseUrl("http://192.168.43.62:5050/")
-                .client(okHttpClient)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-
-            val service = retrofit.create(FileUploadService::class.java)
-
-            val call = service.uploadAudioFile(filePart)
-            val response = call.execute()
-
-            if (response.isSuccessful) {
-                applicationContext.sendNotification(
-                    "File Upload Successful",
-                    "File successfully uploaded."
-                )
-                Log.e("CallRec", "success upload ${response.body()}")
-                return@withContext Result.success()
-            } else {
-                applicationContext.sendNotification(
-                    "File Upload Failed",
-                    "File upload failed. ${response.errorBody()}"
-                )
-                Log.e("CallRec", "Error => ${response.errorBody()}")
-                return@withContext Result.failure()
+                    .asString()
+                    .setCallback { e, response ->
+                        if (e != null) {
+                            applicationContext.sendNotification(
+                                "File Upload Failed",
+                                "File upload failed. $e"
+                            )
+                            Log.e("CallRec", "Error => $e")
+                            continuation.resume(Result.failure())
+                        } else {
+                            applicationContext.sendNotification(
+                                "File Upload Successful",
+                                "File successfully uploaded."
+                            )
+                            Log.e("CallRec", "success upload ${response}")
+                            // Handle success
+                            continuation.resume(Result.success())
+                        }
+                    }
             }
+
+            return@withContext result
         } catch (e: Exception) {
-            Log.e("CallRec", "Exception => $e")
             return@withContext Result.failure()
         }
     }
