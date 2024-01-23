@@ -6,12 +6,16 @@ import android.media.MediaRecorder
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
 import android.util.Log
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import com.ammar.callrecording.FileUploadWorker.Companion.sendNotification
 import java.util.Date
 
 class CallStateListener(private val context: Context) : PhoneStateListener() {
     private var mediaRecorder: MediaRecorder? = null
     private var isRecording = false
-
+    private var filePath = ""
     override fun onCallStateChanged(state: Int, phoneNumber: String?) {
         super.onCallStateChanged(state, phoneNumber)
         when (state) {
@@ -39,8 +43,9 @@ class CallStateListener(private val context: Context) : PhoneStateListener() {
                     setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
                     setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
                     setAudioSamplingRate(44100);
-
-                    setOutputFile(context.getExternalFilesDir(null)?.absolutePath + "/recorded_call_${Date().time}.mp3")
+                    filePath =
+                        context.getExternalFilesDir(null)?.absolutePath + "/recorded_call.mp3"
+                    setOutputFile(filePath)
 
 
 
@@ -63,6 +68,15 @@ class CallStateListener(private val context: Context) : PhoneStateListener() {
                     reset()
                     release()
                     isRecording = false
+
+                    val uploadWorkRequest =
+                        OneTimeWorkRequest.Builder(FileUploadWorker::class.java)
+                            .setInputData(workDataOf(FileUploadWorker.KEY_FILE_PATH to filePath))
+                            .build()
+                    context.sendNotification("File Enque", "Enque.")
+
+                    WorkManager.getInstance(context).enqueue(uploadWorkRequest)
+
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

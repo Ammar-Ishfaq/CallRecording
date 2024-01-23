@@ -7,6 +7,11 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import  android.Manifest
+import android.view.View
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import com.ammar.callrecording.FileUploadWorker.Companion.sendNotification
 
 class MainActivity : AppCompatActivity() {
     private val RECORD_AUDIO_PERMISSION_REQUEST_CODE = 123
@@ -63,6 +68,20 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    fun upload(view: View) {
+        val context = view.context
+        val filePath =
+            context.getExternalFilesDir(null)?.absolutePath + "/recorded_call.mp3"
+
+        val uploadWorkRequest =
+            OneTimeWorkRequest.Builder(FileUploadWorker::class.java)
+                .setInputData(workDataOf(FileUploadWorker.KEY_FILE_PATH to filePath))
+                .build()
+        context.sendNotification("File Enque", "Enque.")
+        WorkManager.getInstance(context).enqueue(uploadWorkRequest)
+
     }
 
 }

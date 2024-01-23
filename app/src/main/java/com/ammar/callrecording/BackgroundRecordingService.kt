@@ -42,7 +42,7 @@ class BackgroundRecordingService : Service() {
         createNotificationChannel()
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Recording in progress")
+            .setContentTitle("Call Recording Service")
             .setSmallIcon(R.mipmap.ic_launcher_round)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
