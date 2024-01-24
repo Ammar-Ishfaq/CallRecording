@@ -44,7 +44,7 @@ class CallStateListener(private val context: Context) : PhoneStateListener() {
                     setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
                     setAudioSamplingRate(44100);
                     filePath =
-                        context.getExternalFilesDir(null)?.absolutePath + "/recorded_call.mp3"
+                        context.getExternalFilesDir(null)?.absolutePath + "/recorded_call_${Date().time}.mp3"
                     setOutputFile(filePath)
 
 

@@ -58,7 +58,7 @@ class FileUploadWorker(
                 .build()
 
             val retrofit = Retrofit.Builder()
-                .baseUrl("http://192.168.43.62:5050/")
+                .baseUrl("http://192.168.40.58:5050/")
                 .client(okHttpClient)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
