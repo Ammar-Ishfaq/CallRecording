@@ -3,6 +3,8 @@ package com.ammar.callrecording
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -11,6 +13,7 @@ import androidx.work.WorkerParameters
 import com.koushikdutta.ion.Ion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.MultipartBody
@@ -35,6 +38,14 @@ class FileUploadWorker(
                 "File upload in Progress."
             )
 
+            var isConnected = isInternetConnected(appContext)
+
+            while (!isConnected) {
+                delay(5000)
+
+                isConnected = isInternetConnected(appContext)
+            }
+
             // Retrieve the file path from input data
             val filePath = inputData.getString(KEY_FILE_PATH)
             if (filePath.isNullOrBlank()) {
@@ -58,7 +69,7 @@ class FileUploadWorker(
                 .build()
 
             val retrofit = Retrofit.Builder()
-                .baseUrl("http://192.168.40.58:5050/")
+                .baseUrl("http://192.168.0.116:5050/")
                 .client(okHttpClient)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
@@ -81,8 +92,12 @@ class FileUploadWorker(
                     "File upload failed. ${response.errorBody()}"
                 )
                 Log.e("CallRec", "Error => ${response.errorBody()}")
-                return@withContext Result.failure()
+
+                // Retry the upload after a delay
+                delay(5000)  // Adjust the delay time as needed
             }
+
+            return@withContext Result.failure()
         } catch (e: Exception) {
             Log.e("CallRec", "Exception => $e")
             return@withContext Result.failure()
@@ -126,5 +141,24 @@ class FileUploadWorker(
             notificationManager.notify(1, notificationBuilder.build())
         }
 
+    }
+
+    private suspend fun isInternetConnected(context: Context): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val connectivityManager =
+                    context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+                val networkCapabilities = connectivityManager.activeNetwork ?: return@withContext false
+                val activeNetwork =
+                    connectivityManager.getNetworkCapabilities(networkCapabilities)
+                        ?: return@withContext false
+
+                return@withContext activeNetwork.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            } catch (e: Exception) {
+                // Handle exceptions if needed
+                return@withContext false
+            }
+        }
     }
 }
